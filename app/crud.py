@@ -1,7 +1,9 @@
 from typing import Optional
+import httpx
 from app.models import DXHub, DXProject, DXFolderTree, DXItem, DXExchange
 from app.queries import (
     execute_graphql_query,
+    execute_graphql_query_async,
     GET_HUBS,
     GET_PROJECTS,
     GET_TOP_FOLDERS,
@@ -54,3 +56,36 @@ def get_top_folders(token: str, project_id: str) -> list[DXFolderTree]:
 
 def get_folder_tree(token: str, folder_id: str) -> DXFolderTree | None:
     return parse_folder_tree(execute_graphql_query(GET_FOLDER_CONTENT, token, {"folderId": folder_id}))
+
+
+# Async counterparts used by orchestrator
+async def get_hubs_async(token: str, *, client: httpx.AsyncClient | None = None) -> list[DXHub]:
+    data = await execute_graphql_query_async(GET_HUBS, token, client=client)
+    return parse_hubs(data)
+
+
+async def get_projects_async(
+    token: str, hub_id: str, *, client: httpx.AsyncClient | None = None
+) -> list[DXProject]:
+    data = await execute_graphql_query_async(
+        GET_PROJECTS, token, {"hubId": hub_id}, client=client
+    )
+    return parse_projects(data)
+
+
+async def get_top_folders_async(
+    token: str, project_id: str, *, client: httpx.AsyncClient | None = None
+) -> list[DXFolderTree]:
+    data = await execute_graphql_query_async(
+        GET_TOP_FOLDERS, token, {"projectId": project_id}, client=client
+    )
+    return parse_top_folders(data)
+
+
+async def get_folder_tree_async(
+    token: str, folder_id: str, *, client: httpx.AsyncClient | None = None
+) -> DXFolderTree | None:
+    data = await execute_graphql_query_async(
+        GET_FOLDER_CONTENT, token, {"folderId": folder_id}, client=client
+    )
+    return parse_folder_tree(data)

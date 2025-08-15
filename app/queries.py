@@ -1,5 +1,6 @@
 import os
 import requests
+import httpx
 
 # Query strings
 GET_HUBS = """
@@ -57,3 +58,37 @@ def execute_graphql_query(query: str, token: str, variables: dict | None = None)
     if "errors" in data:
         raise Exception(f"GraphQL API returned errors:\n{data['errors']}")
     return data.get("data", {})
+
+
+async def execute_graphql_query_async(
+  query: str,
+  token: str,
+  variables: dict | None = None,
+  *,
+  client: httpx.AsyncClient | None = None,
+) -> dict:
+  """Async variant of the GraphQL executor using httpx.
+
+  If a client is provided, it will be used; otherwise a temporary AsyncClient
+  will be created for this request.
+  """
+  headers = {
+    "Authorization": f"Bearer {token}",
+    "x-ads-region": APS_REGION,
+    "Content-Type": "application/json",
+  }
+  payload: dict = {"query": query}
+  if variables:
+    payload["variables"] = variables
+
+  if client is None:
+    async with httpx.AsyncClient() as _client:
+      resp = await _client.post(DX_GRAPHQL_URL, headers=headers, json=payload)
+  else:
+    resp = await client.post(DX_GRAPHQL_URL, headers=headers, json=payload)
+
+  resp.raise_for_status()
+  data = resp.json()
+  if "errors" in data:
+    raise Exception(f"GraphQL API returned errors:\n{data['errors']}")
+  return data.get("data", {})

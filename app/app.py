@@ -2,6 +2,7 @@ import json
 import viktor as vkt  # type: ignore
 from pathlib import Path
 from typing import Any
+import asyncio
 from app.data_exchange import get_all_content_from_all_hubs
 from app.models import HubData, serialize_folder
 
@@ -23,10 +24,10 @@ class Controller(vkt.Controller):
         # Fetch typed hierarchy (includes DXFolderTree instances)
         integration = vkt.external.OAuth2Integration("aps-integration-1")
         token = integration.get_access_token()
-        content = get_all_content_from_all_hubs(token=token)
+        # Run async orchestrator in a fresh event loop
+        content = asyncio.run(get_all_content_from_all_hubs(token=token))
 
         # Convert Pydantic models (DXFolderTree) into JSON-serializable dicts
-
         def serialize_content(hubs: dict[str, HubData]) -> dict[str, Any]:
             out: dict[str, Any] = {}
             for hub_id, hub in hubs.items():
@@ -47,8 +48,6 @@ class Controller(vkt.Controller):
         json_content = json.dumps(serialized, ensure_ascii=False)
 
         # Load HTML template and inject JSON
-        html = (Path(__file__).parent / "FolderBrowser.html").read_text(
-            encoding="utf-8"
-        )
+        html = (Path(__file__).parent / "FolderBrowser.html").read_text(encoding="utf-8")
         html = html.replace("FOLDER_DATA_PLACEHOLDER", json_content)
         return vkt.WebResult(html=html)
