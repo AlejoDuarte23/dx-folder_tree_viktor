@@ -1,7 +1,7 @@
 import json
 import viktor as vkt  # type: ignore
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from app.data_exchange import get_all_content_from_all_hubs
 from app.models import HubData, serialize_folder
 
@@ -27,10 +27,10 @@ class Controller(vkt.Controller):
 
         # Convert Pydantic models (DXFolderTree) into JSON-serializable dicts
 
-        def serialize_content(hubs: dict[str, HubData]) -> Dict[str, Any]:
-            out: Dict[str, Any] = {}
+        def serialize_content(hubs: dict[str, HubData]) -> dict[str, Any]:
+            out: dict[str, Any] = {}
             for hub_id, hub in hubs.items():
-                projects_obj: Dict[str, Any] = {}
+                projects_obj: dict[str, Any] = {}
                 for proj_id, proj in hub["projects"].items():
                     projects_obj[proj_id] = {
                         "name": proj["name"],

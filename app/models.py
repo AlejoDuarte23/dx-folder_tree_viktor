@@ -1,4 +1,4 @@
-from typing import List, Optional, Self, TypedDict, Any
+from typing import Self, TypedDict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 class DXHub(BaseModel):
@@ -12,20 +12,20 @@ class DXProject(BaseModel):
 class DXItem(BaseModel):
     id: str
     name: str
-    typename: Optional[str] = Field(default=None, alias="__typename")
+    typename: str | None = Field(default=None, alias="__typename")
 
 class DXExchange(BaseModel):
     id: str
     name: str
-    typename: Optional[str] = Field(default=None, alias="__typename")
+    typename: str | None = Field(default=None, alias="__typename")
 
 class DXFolderTree(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    id: Optional[str] = None
+    id: str | None = None
     name: str
-    items: List[DXItem] = Field(default_factory=list, description="This Only Include viewables so no PDF no docx. xlsx and so on")
-    exchanges: List[DXExchange] = Field(default_factory=list)
-    folders: List[Self] = Field(default_factory=list) # A subfoler is a DXFolderTree also
+    items: list[DXItem] = Field(default_factory=list, description="This Only Include viewables so no PDF no docx. xlsx and so on")
+    exchanges: list[DXExchange] = Field(default_factory=list)
+    folders: list[Self] = Field(default_factory=list) # A subfoler is a DXFolderTree also
 
 # Typed containers for return shape
 class ProjectData(TypedDict):

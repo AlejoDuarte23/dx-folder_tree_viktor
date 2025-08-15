@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from app.models import DXHub, DXProject, DXFolderTree, DXItem, DXExchange
 from app.queries import (
     execute_graphql_query,
@@ -9,15 +9,15 @@ from app.queries import (
 )
 
 # Parsers
-def parse_hubs(data: dict) -> List[DXHub]:
+def parse_hubs(data: dict) -> list[DXHub]:
     arr = data.get("hubs", {}).get("results", []) or []
     return [DXHub.model_validate(x) for x in arr]
 
-def parse_projects(data: dict) -> List[DXProject]:
+def parse_projects(data: dict) -> list[DXProject]:
     arr = data.get("projects", {}).get("results", []) or []
     return [DXProject.model_validate(x) for x in arr]
 
-def parse_top_folders(data: dict) -> List[DXFolderTree]:
+def parse_top_folders(data: dict) -> list[DXFolderTree]:
     # Reuse DXFolderTree for refs (id+name only)
     arr = data.get("project", {}).get("folders", {}).get("results", []) or []
     return [DXFolderTree.model_validate(x) for x in arr]
@@ -43,14 +43,14 @@ def parse_folder_tree(data: dict) -> Optional[DXFolderTree]:
 
     return _build(raw)
 
-def get_hubs(token: str) -> List[DXHub]:
+def get_hubs(token: str) -> list[DXHub]:
     return parse_hubs(execute_graphql_query(GET_HUBS, token))
 
-def get_projects(token: str, hub_id: str) -> List[DXProject]:
+def get_projects(token: str, hub_id: str) -> list[DXProject]:
     return parse_projects(execute_graphql_query(GET_PROJECTS, token, {"hubId": hub_id}))
 
-def get_top_folders(token: str, project_id: str) -> List[DXFolderTree]:
+def get_top_folders(token: str, project_id: str) -> list[DXFolderTree]:
     return parse_top_folders(execute_graphql_query(GET_TOP_FOLDERS, token, {"projectId": project_id}))
 
-def get_folder_tree(token: str, folder_id: str) -> Optional[DXFolderTree]:
+def get_folder_tree(token: str, folder_id: str) -> DXFolderTree | None:
     return parse_folder_tree(execute_graphql_query(GET_FOLDER_CONTENT, token, {"folderId": folder_id}))
