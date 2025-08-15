@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APS Folder Browser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .tree {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+        .tree ul {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 1px dotted #ccc;
+        }
+        .tree li {
+            margin: 5px 0;
+            position: relative;
+        }
+        .folder {
+            cursor: pointer;
+        }
+        .folder::before {
+            content: "📁 ";
+        }
+        .file::before {
+            content: "📄 ";
+        }
+        .exchange::before {
+            content: "🔁 ";
+        }
+        .expanded > ul {
+            display: block;
+        }
+        .collapsed > ul {
+            display: none;
+        }
+        .hub-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        .muted { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>APS Folder Structure</h1>
+    <div id="folder-structure"></div>
+    <script id="data-json" type="application/json">FOLDER_DATA_PLACEHOLDER</script>
+
+    <script>
+    // Get the JSON data injected from Python (safer than inline string)
+    const folderData = JSON.parse(document.getElementById('data-json').textContent || '{}');
+        
+        function renderFolder(folder) {
+            const li = document.createElement('li');
+            li.classList.add('folder', 'expanded');
+            const title = document.createElement('span');
+            title.textContent = folder.name;
+            title.onclick = () => { li.classList.toggle('collapsed'); li.classList.toggle('expanded'); };
+            li.appendChild(title);
+
+            const children = document.createElement('ul');
+
+            // Items (files)
+            (folder.items || []).forEach(it => {
+                const f = document.createElement('li');
+                f.classList.add('file');
+                f.textContent = it.name;
+                children.appendChild(f);
+            });
+
+            // Exchanges (versions)
+            (folder.exchanges || []).forEach(ex => {
+                const e = document.createElement('li');
+                e.classList.add('exchange');
+                e.textContent = ex.name;
+                children.appendChild(e);
+            });
+
+            // Subfolders
+            (folder.folders || []).forEach(sub => {
+                children.appendChild(renderFolder(sub));
+            });
+
+            if (children.children.length) li.appendChild(children);
+            return li;
+        }
+
+        function buildTree() {
+            const container = document.getElementById('folder-structure');
+            container.innerHTML = '';
+
+            for (const [hubId, hub] of Object.entries(folderData)) {
+                const hubHeader = document.createElement('div');
+                hubHeader.classList.add('hub-title');
+                hubHeader.textContent = `Hub: ${hub.name}`;
+                container.appendChild(hubHeader);
+
+                const tree = document.createElement('ul');
+                tree.classList.add('tree');
+
+                const projects = hub.projects || {};
+                for (const [projId, proj] of Object.entries(projects)) {
+                    const projNode = document.createElement('li');
+                    projNode.classList.add('folder', 'expanded');
+                    const projTitle = document.createElement('span');
+                    projTitle.textContent = proj.name || '(unnamed project)';
+                    projTitle.onclick = () => { projNode.classList.toggle('collapsed'); projNode.classList.toggle('expanded'); };
+                    projNode.appendChild(projTitle);
+
+                    const pfList = document.createElement('ul');
+                    (proj.folder_tree || []).forEach(ft => {
+                        pfList.appendChild(renderFolder(ft));
+                    });
+                    if (!pfList.children.length) {
+                        const empty = document.createElement('li');
+                        empty.classList.add('muted');
+                        empty.textContent = 'No folders or items available';
+                        pfList.appendChild(empty);
+                    }
+                    projNode.appendChild(pfList);
+                    tree.appendChild(projNode);
+                }
+
+                container.appendChild(tree);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', buildTree);
+    </script>
+</body>
+</html>

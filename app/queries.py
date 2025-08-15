@@ -1,0 +1,59 @@
+import os
+import requests
+
+# Query strings
+GET_HUBS = """
+query GetHubs {
+  hubs { results { id name } }
+}
+"""
+
+GET_PROJECTS = """
+query GetProjects($hubId: ID!) {
+  projects(hubId: $hubId) { results { id name } }
+}
+"""
+
+GET_TOP_FOLDERS = """
+query GetTopFolders($projectId: ID!) {
+  project(projectId: $projectId) {
+    folders { results { id name } }
+  }
+}
+"""
+
+FOLDER_FRAGMENT = """
+fragment FolderContents on Folder {
+  id
+  name
+  items { results { id name __typename } }
+  exchanges { results { id name __typename } }
+  folders { results { id name } }
+}
+"""
+
+GET_FOLDER_CONTENT = f"""
+query GetFolderContent($folderId: ID!) {{
+  folder(folderId: $folderId) {{ ...FolderContents }}
+}}
+{FOLDER_FRAGMENT}
+"""
+
+DX_GRAPHQL_URL = "https://developer.api.autodesk.com/dataexchange/2023-05/graphql"
+APS_REGION = os.environ.get("APS_REGION", "")
+
+def execute_graphql_query(query: str, token: str, variables: dict | None = None) -> dict:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "x-ads-region": APS_REGION,
+        "Content-Type": "application/json",
+    }
+    payload = {"query": query}
+    if variables:
+        payload["variables"] = variables
+    resp = requests.post(DX_GRAPHQL_URL, headers=headers, json=payload)
+    resp.raise_for_status()
+    data = resp.json()
+    if "errors" in data:
+        raise Exception(f"GraphQL API returned errors:\n{data['errors']}")
+    return data.get("data", {})
