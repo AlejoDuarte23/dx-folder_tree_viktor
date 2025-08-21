@@ -21,7 +21,7 @@ class Controller(vkt.Controller):
     @vkt.WebView("Folder Structure", duration_guess=40)
     def print_folder_tree_rest(self, params, **kwargs) -> vkt.WebResult:
         # Fetch typed hierarchy (includes DXFolderTree instances)
-        integration = vkt.external.OAuth2Integration("aps-integration-1")
+        integration = vkt.external.OAuth2Integration("aps-integration-viktor")
         token = integration.get_access_token()
         content = get_all_content_from_all_hubs(token=token)
 
